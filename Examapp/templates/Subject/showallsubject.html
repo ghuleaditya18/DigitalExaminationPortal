@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="page-header">
+
+    <h1>All Subjects</h1>
+    <p>Manage available subjects.</p>
+
+</div>
+
+<table class="subject-table">
+
+    <tr>
+        <th>ID</th>
+        <th>Subject Name</th>
+        <th>Actions</th>
+    </tr>
+
+    {% for subject in subjects %}
+
+    <tr>
+
+        <td>{{ subject.subject_id }}</td>
+
+        <td>{{ subject.subject_name }}</td>
+
+        <td>
+
+            <a
+                href="{% url 'show_update_subject' subject.subject_id %}"
+                class="table-action"
+            >
+                Edit
+            </a>
+
+            <a
+                href="{% url 'show_delete_subject' subject.subject_id %}"
+                class="table-action delete-action"
+            >
+                Delete
+            </a>
+
+        </td>
+
+    </tr>
+
+    {% endfor %}
+
+</table>
+
+<a
+    href="{% url 'create_subject' %}"
+    class="add-icon-top"
+>
++
+</a>
+
+{% endblock %}

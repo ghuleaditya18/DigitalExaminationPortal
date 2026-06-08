@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="form-card wide-card">
+    <h1>Update Question</h1>
+    <p>Edit the question details below.</p>
+    <form method="POST" action="{% url 'update_question' data.qno %}">
+        {% csrf_token %}
+        <label>Question</label>
+        <textarea name="qtext" required>{{ data.qtext }}</textarea>
+        <div class="form-grid">
+            <div><label>Option 1</label><input type="text" name="opt1" value="{{ data.opt1 }}" required></div>
+            <div><label>Option 2</label><input type="text" name="opt2" value="{{ data.opt2 }}" required></div>
+            <div><label>Option 3</label><input type="text" name="opt3" value="{{ data.opt3 }}" required></div>
+            <div><label>Option 4</label><input type="text" name="opt4" value="{{ data.opt4 }}" required></div>
+        </div>
+        <label>Correct Answer</label>
+        <input type="text" name="corr_ans" value="{{ data.corr_ans }}" required>
+        <label>Subject</label>
+        <input type="text" name="subject" value="{{ data.subject }}" required>
+        <button type="submit">Update Question</button>
+    </form>
+</div>
+
+{% endblock %}

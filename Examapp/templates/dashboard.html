@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Welcome, {{ request.session.username }}</h1>
+    <p>Your {{ request.session.role }} dashboard is ready.</p>
+</div>
+<div class="stats-grid">
+    {% if request.session.role == 'teacher' %}
+    <div class="stat-card"><strong>{{ question_count }}</strong><span>Questions</span></div>
+    <div class="stat-card"><strong>{{ student_count }}</strong><span>Students</span></div>
+    <div class="stat-card"><strong>{{ attempt_count }}</strong><span>Exam Attempts</span></div>
+    {% else %}
+    <div class="stat-card"><strong>{{ attempt_count }}</strong><span>Tests Attempted</span></div>
+    <a href="{% url 'subject' %}" class="stat-card action-card"><i class="bi bi-play-circle"></i><span>Start New Test</span></a>
+    <a href="{% url 'student_profile' %}" class="stat-card action-card"><i class="bi bi-person"></i><span>View Profile</span></a>
+    {% endif %}
+</div>
+{% endblock %}

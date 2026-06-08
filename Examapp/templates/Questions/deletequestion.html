@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="form-card">
+    <h1>Delete Question</h1>
+    <p>Are you sure you want to delete this question?</p>
+    <div class="confirmation-box">{{ data.qtext }}</div>
+    <form method="POST" action="{% url 'delete_question' data.qno %}">
+        {% csrf_token %}
+        <button type="submit" class="danger-button">Delete Question</button>
+        <a href="{% url 'show_all_question' %}" class="button-link secondary-link">Cancel</a>
+    </form>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="form-card wide-card">
+
+    <h1>Create Question</h1>
+    <p>Add a question and its answer options.</p>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <label>Subject</label>
+
+        <select name="subject" required>
+
+            <option value="">
+                Select Subject
+            </option>
+
+            {% for subject in subjects %}
+
+                <option value="{{ subject.subject_name }}">
+                    {{ subject.subject_name }}
+                </option>
+
+            {% empty %}
+
+                <option value="">
+                    No Subject Available
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+        <label>Question</label>
+
+        <textarea name="qtext" required></textarea>
+
+        <div class="form-grid">
+
+            <div>
+                <label>Option 1</label>
+                <input type="text" name="opt1" required>
+            </div>
+
+            <div>
+                <label>Option 2</label>
+                <input type="text" name="opt2" required>
+            </div>
+
+            <div>
+                <label>Option 3</label>
+                <input type="text" name="opt3" required>
+            </div>
+
+            <div>
+                <label>Option 4</label>
+                <input type="text" name="opt4" required>
+            </div>
+
+        </div>
+
+        <label>Correct Answer</label>
+
+        <input type="text" name="corr_ans" required>
+
+        <button type="submit">
+            Save Question
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

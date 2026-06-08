@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="form-card">
+    {% if role %}
+    <a href="{% url role|add:'_login' %}" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to {{ role }} login
+    </a>
+    {% endif %}
+    <h1>{{ title|default:"Create User" }}</h1>
+    <p>{{ subtitle }}</p>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">{{ submit_label|default:"Save" }}</button>
+    </form>
+    <p class="form-note">Your account becomes active after OTP verification.</p>
+</div>
+
+{% endblock %}

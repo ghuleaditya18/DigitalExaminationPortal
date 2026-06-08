@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="form-card">
+    <h1>Verify OTP</h1>
+    <p>Enter the OTP sent to mobile number {{ mobile_no }}.</p>
+    <div class="development-note">
+        Development OTP: <strong>{{ development_otp }}</strong>
+    </div>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Verify OTP</button>
+        <a href="{% url 'resend_otp' %}" class="button-link secondary-link">Resend OTP</a>
+    </form>
+</div>
+{% endblock %}

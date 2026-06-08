@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="page-header">
+    <h1>User Management</h1>
+    <p>Create and maintain student or teacher accounts.</p>
+</div>
+<div class="page-actions">
+    <a href="{% url 'create_user' %}" class="button-link">Add User</a>
+    <a href="{% url 'show_all_user' %}" class="button-link">Show Users</a>
+</div>
+
+{% endblock %}

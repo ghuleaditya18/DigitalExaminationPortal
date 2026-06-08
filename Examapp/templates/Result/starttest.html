@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="exam-container">
+
+    <!-- EXAM HEADER -->
+    <div class="exam-header">
+
+        <div class="user-info">
+
+            <i class="bi bi-person-circle"></i>
+
+            {{ request.session.username }}
+
+        </div>
+
+        <div class="question-count">
+
+            Question {{ question.qno }} of {{ total_questions }}
+
+        </div>
+
+        <div class="exam-timer">
+            <i class="bi bi-clock"></i>
+            <span id="timer">--:--</span>
+        </div>
+
+    </div>
+
+    <p class="exam-rule">
+        Do not change tabs or minimize the window. The test is submitted
+        automatically on the third warning.
+        <strong id="warning-count">Warnings: {{ warning_count }}/3</strong>
+    </p>
+
+    <!-- MESSAGE -->
+    {% if msg %}
+
+    <p class="exam-msg">
+
+        {{ msg }}
+
+    </p>
+
+    {% endif %}
+
+    <!-- QUESTION CARD -->
+    <div class="question-card">
+
+        <form method="GET" id="exam-form">
+            {% csrf_token %}
+
+            <!-- HIDDEN FIELDS -->
+
+            <input type="hidden"
+                   name="qno"
+                   value="{{ question.qno }}">
+
+            <input type="hidden"
+                   name="qtext"
+                   value="{{ question.qtext }}">
+
+            <input type="hidden"
+                   name="answer"
+                   value="{{ question.corr_ans }}">
+
+            <input type="hidden"
+                   name="subject"
+                   value="{{ question.subject }}">
+
+            <!-- QUESTION -->
+
+            <h2 class="question-text">
+
+                {{ question.qno }}.
+                {{ question.qtext }}
+
+            </h2>
+
+            <!-- OPTIONS -->
+
+            <div class="option-box">
+
+                <label>
+
+                    <input type="radio"
+                           name="op"
+                           value="{{ question.opt1 }}">
+
+                    {{ question.opt1 }}
+
+                </label>
+
+                <label>
+
+                    <input type="radio"
+                           name="op"
+                           value="{{ question.opt2 }}">
+
+                    {{ question.opt2 }}
+
+                </label>
+
+                <label>
+
+                    <input type="radio"
+                           name="op"
+                           value="{{ question.opt3 }}">
+
+                    {{ question.opt3 }}
+
+                </label>
+
+                <label>
+
+                    <input type="radio"
+                           name="op"
+                           value="{{ question.opt4 }}">
+
+                    {{ question.opt4 }}
+
+                </label>
+
+            </div>
+
+            <!-- BUTTONS -->
+
+            <div class="exam-buttons">
+
+                <button formaction="{% url 'previous_question' %}">
+
+                    <i class="bi bi-arrow-left-circle"></i>
+
+                    Previous
+
+                </button>
+
+                <button formaction="{% url 'next_question' %}">
+
+                    Next
+
+                    <i class="bi bi-arrow-right-circle"></i>
+
+                </button>
+
+                <button formaction="{% url 'end_test' %}"
+                        class="end-test-btn">
+
+                    <i class="bi bi-stop-circle"></i>
+
+                    End Test
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+    const examForm = document.getElementById("exam-form");
+    const timer = document.getElementById("timer");
+    const warningCount = document.getElementById("warning-count");
+    let remainingSeconds = {{ remaining_seconds }};
+    let submitting = false;
+    let intentionalNavigation = false;
+
+    examForm.addEventListener("submit", () => {
+        intentionalNavigation = true;
+    });
+
+    function submitTest(reason) {
+        if (submitting) return;
+        submitting = true;
+        intentionalNavigation = true;
+        if (reason) {
+            const reasonInput = document.createElement("input");
+            reasonInput.type = "hidden";
+            reasonInput.name = "submission_reason";
+            reasonInput.value = reason;
+            examForm.appendChild(reasonInput);
+        }
+        examForm.action = "{% url 'end_test' %}";
+        examForm.submit();
+    }
+
+    function updateTimer() {
+        const minutes = String(Math.floor(remainingSeconds / 60)).padStart(2, "0");
+        const seconds = String(remainingSeconds % 60).padStart(2, "0");
+        timer.textContent = `${minutes}:${seconds}`;
+        if (remainingSeconds <= 0) {
+            submitTest("timeout");
+            return;
+        }
+        remainingSeconds -= 1;
+    }
+
+    updateTimer();
+    setInterval(updateTimer, 1000);
+
+    document.addEventListener("visibilitychange", async () => {
+        if (!document.hidden || submitting || intentionalNavigation) return;
+        const csrfToken = examForm.querySelector("[name=csrfmiddlewaretoken]").value;
+        const response = await fetch("{% url 'record_window_warning' %}", {
+            method: "POST",
+            headers: {"X-CSRFToken": csrfToken},
+        });
+        const data = await response.json();
+        warningCount.textContent = `Warnings: ${Math.min(data.warning_count, 3)}/3`;
+        if (data.submit) {
+            submitTest("window-switch");
+        } else {
+            alert(data.message);
+        }
+    });
+</script>
+{% endblock %}

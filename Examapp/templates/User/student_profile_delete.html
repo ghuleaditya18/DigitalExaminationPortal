@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="form-card">
+    <h1>Delete My Profile</h1>
+    <p>This will permanently delete your account and exam history.</p>
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="danger-button">Delete My Account</button>
+        <a href="{% url 'student_profile' %}" class="button-link secondary-link">Cancel</a>
+    </form>
+</div>
+{% endblock %}

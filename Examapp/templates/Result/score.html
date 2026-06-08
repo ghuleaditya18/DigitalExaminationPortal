@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="result-container">
+    <h1>Exam Result</h1>
+    {% if submission_message %}<p class="exam-msg">{{ submission_message }}</p>{% endif %}
+    <div class="result-summary">
+        <div><strong>{{ total_questions }}</strong><span>Total Questions</span></div>
+        <div><strong>{{ correct_answers }}</strong><span>Correct Answers</span></div>
+        <div><strong>{{ wrong_answers }}</strong><span>Wrong Answers</span></div>
+        <div><strong>{{ percentage }}%</strong><span>Percentage</span></div>
+    </div>
+
+    {% if percentage >= 40 %}
+    <p class="result-status pass-status">PASS</p>
+    {% else %}
+    <p class="result-status fail-status">FAIL</p>
+    {% endif %}
+
+    <hr>
+    <h2>Answer Review</h2>
+    {% if review_data %}
+        {% for item in review_data %}
+        <div class="review-card">
+            <h4>{{ item.question }}</h4>
+            <p><strong>Your Answer:</strong> {{ item.user_answer }}</p>
+            <p><strong>Correct Answer:</strong> {{ item.correct_answer }}</p>
+            {% if item.status %}
+            <p class="answer-correct">Correct</p>
+            {% else %}
+            <p class="answer-wrong">Wrong</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+    <p>No answer review available.</p>
+    {% endif %}
+</div>
+{% endblock %}

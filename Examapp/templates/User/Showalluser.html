@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="page-header">
+    <h1>All Users</h1>
+    <p>Manage student and teacher accounts.</p>
+</div>
+
+<table border="1">
+
+<tr>
+    <th>No</th>
+    <th>Username</th>
+    <th>Role</th>
+    <th>Active</th>
+    <th>Mobile No</th>
+    <th>Created At</th>
+    <th>Updated At</th>
+    <th>Actions</th>
+</tr>
+
+{% for i in data %}
+
+<tr>
+
+    <td>{{ forloop.counter }}</td>
+    <td>{{ i.username }}</td>
+    <td>{{ i.role|title }}</td>
+    <td>{{ i.is_active|yesno:"Yes,No" }}</td>
+    <td>{{ i.mobile_no }}</td>
+
+    <td>{{ i.created_at|date:"d M Y h:i A" }}</td>
+    <td>{{ i.updated_at|date:"d M Y h:i A" }}</td>
+
+    <td>
+
+        <a href="{% url 'show_update_user' i.id %}" class="table-action">Edit</a>
+        <a href="{% url 'show_delete_user' i.id %}" class="table-action delete-action">Delete</a>
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+<a href="{% url 'create_user' %}" class="add-icon-top" title="Add User">
+     <i class="bi bi-plus-circle-fill"></i>
+</a>
+
+{% endblock %}

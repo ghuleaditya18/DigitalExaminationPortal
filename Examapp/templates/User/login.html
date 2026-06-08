@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="login-panel">
+    <a href="{% url 'login_choice' %}" class="back-link">
+        <i class="bi bi-arrow-left"></i> Choose another login
+    </a>
+    <div class="login-icon"><i class="bi bi-person-circle"></i></div>
+    <h2>{{ role|title }} Login</h2>
+    <p>Enter your {{ role }} account details.</p>
+    <form method="POST">
+        {% csrf_token %}
+        <label>Username</label>
+        <input type="text" name="username" required>
+        <label>Password</label>
+        <input type="password" name="password" required>
+        <button type="submit">Login</button>
+    </form>
+    {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+    {% if verification_required %}
+    <p><a href="{% url 'verify_otp' %}">Verify OTP now</a></p>
+    {% endif %}
+    <p class="auth-footer">
+        {% if role == 'teacher' %}
+        <a href="{% url 'teacher_forgot_password' %}">Forgot password?</a>
+        {% else %}
+        <a href="{% url 'student_forgot_password' %}">Forgot password?</a>
+        {% endif %}
+    </p>
+    <p class="auth-footer">
+        New {{ role }}?
+        {% if role == 'teacher' %}
+        <a href="{% url 'teacher_register' %}">Create a teacher account</a>
+        {% else %}
+        <a href="{% url 'student_register' %}">Create a student account</a>
+        {% endif %}
+    </p>
+</div>
+{% endblock %}

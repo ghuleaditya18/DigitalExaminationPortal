@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="form-card">
+
+    <h1>Select Subject</h1>
+    <p>Choose a subject and test size. Your timer starts after you click Start Test.</p>
+    {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+
+    <form>
+
+        <label>Subject</label>
+        <select name="subject" required>
+
+            {% for sub in subjects %}
+
+            <option value="{{ sub }}">
+                {{ sub }}
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+        <label>Test Size</label>
+        <div class="test-size-grid">
+            <label class="test-size-card">
+                <input type="radio" name="question_limit" value="10" required>
+                <strong>10 Questions</strong>
+                <span>15 minutes</span>
+            </label>
+            <label class="test-size-card">
+                <input type="radio" name="question_limit" value="20">
+                <strong>20 Questions</strong>
+                <span>30 minutes</span>
+            </label>
+            <label class="test-size-card">
+                <input type="radio" name="question_limit" value="50">
+                <strong>50 Questions</strong>
+                <span>60 minutes</span>
+            </label>
+        </div>
+
+        <button formaction="{% url 'start_test' %}">
+
+            Start Test
+
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

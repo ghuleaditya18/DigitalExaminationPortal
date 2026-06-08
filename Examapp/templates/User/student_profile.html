@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+    <h1>My Profile</h1>
+    <p>Your personal information and account details.</p>
+</div>
+<div class="profile-card">
+    <div><span>Username</span><strong>{{ student.username }}</strong></div>
+    <div><span>Mobile Number</span><strong>{{ student.mobile_no }}</strong></div>
+    <div><span>Account Type</span><strong>{{ student.role|title }}</strong></div>
+    <div><span>Joined</span><strong>{{ student.created_at|date:"d M Y" }}</strong></div>
+</div>
+<div class="page-actions">
+    <a href="{% url 'update_student_profile' %}" class="button-link">Update Profile</a>
+    <a href="{% url 'delete_student_profile' %}" class="button-link danger-link">Delete Profile</a>
+</div>
+{% endblock %}

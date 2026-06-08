@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+
+    {% if request.session.role == 'teacher' %}
+
+        <h1>Student Results</h1>
+        <p>Review scores and attempts across all students.</p>
+
+    {% else %}
+
+        <h1>My Exam Details</h1>
+        <p>Your previous test attempts and scores.</p>
+
+    {% endif %}
+
+</div>
+
+{% if results %}
+
+<form method="POST" action="{% url 'delete_multiple_results' %}">
+
+    {% csrf_token %}
+
+    {% if request.session.role == 'teacher' %}
+    <div class="result-action-bar">
+
+        <button
+            type="submit"
+            class="danger-button delete-selected-btn">
+            Delete Selected
+        </button>
+
+    </div>
+    {% endif %}
+
+    <table>
+
+        <tr>
+
+            {% if request.session.role == 'teacher' %}
+            <th class="checkbox-column">
+                Select
+            </th>
+            {% endif %}
+
+            <th>Student</th>
+            <th>Subject</th>
+            <th>Score</th>
+            <th>Correct</th>
+            <th>Wrong</th>
+            <th>Percentage</th>
+            <th>Attempted At</th>
+
+            {% if request.session.role == 'teacher' %}
+            <th>Actions</th>
+            {% endif %}
+
+        </tr>
+
+        {% for result in results %}
+
+        <tr>
+
+            {% if request.session.role == 'teacher' %}
+            <td>
+                <input
+                    type="checkbox"
+                    name="selected_results"
+                    value="{{ result.id }}"
+                    class="results-checkbox"
+                >
+            </td>
+            {% endif %}
+
+            <td>{{ result.username }}</td>
+
+            <td>{{ result.subject }}</td>
+
+            <td>
+                {{ result.score }} /
+                {{ result.total_questions }}
+            </td>
+
+            <td>{{ result.correct_answers }}</td>
+
+            <td>{{ result.wrong_answers }}</td>
+
+            <td>{{ result.percentage }}%</td>
+
+            <td>
+                {{ result.created_at|date:"d M Y h:i A" }}
+            </td>
+
+            {% if request.session.role == 'teacher' %}
+            <td>
+
+                <a
+                    href="{% url 'delete_result' result.id %}"
+                    class="table-action delete-action"
+                    onclick="return confirm('Delete this result?')"
+                >
+                    Delete
+                </a>
+
+            </td>
+            {% endif %}
+
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+</form>
+
+{% else %}
+
+<p class="empty-state">
+    No exam attempts are available yet.
+</p>
+
+{% endif %}
+
+{% endblock %}
+<script>
+
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+
+        const selectAll =
+            document.getElementById(
+                'select-all'
+            );
+
+        if (selectAll) {
+
+            selectAll.addEventListener(
+                'change',
+                function () {
+
+                    document
+                        .querySelectorAll(
+                            'input[name="selected_results"]'
+                        )
+                        .forEach(
+                            checkbox => {
+                                checkbox.checked =
+                                    selectAll.checked;
+                            }
+                        );
+
+                }
+            );
+
+        }
+
+    }
+);
+
+</script>
