@@ -86,7 +86,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'OnlineTestPortal1311db',
         'USER': 'root',
-        'PASSWORD': 'REMOVED_SECRET',
+        'PASSWORD': 'root@password',
         'HOST': 'localhost',
         'PORT': '3306',
     }

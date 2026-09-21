@@ -18,6 +18,66 @@
 
 </div>
 
+{% comment %}
+This form shows the Sort Results, Minimum %, Maximum %, Apply, and Clear
+controls above the student results table.
+
+{% if request.session.role == 'teacher' %}
+<form method="GET" class="result-filter-form">
+
+    <div>
+        <label for="sort">Sort Results</label>
+        <select name="sort" id="sort">
+            <option value="percentage_desc" {% if sort == 'percentage_desc' %}selected{% endif %}>
+                Highest Percentage First
+            </option>
+            <option value="percentage_asc" {% if sort == 'percentage_asc' %}selected{% endif %}>
+                Lowest Percentage First
+            </option>
+            <option value="latest" {% if sort == 'latest' %}selected{% endif %}>
+                Latest Attempts First
+            </option>
+            <option value="student" {% if sort == 'student' %}selected{% endif %}>
+                Student Name
+            </option>
+        </select>
+    </div>
+
+    <div>
+        <label for="min_percentage">Minimum %</label>
+        <input
+            type="number"
+            name="min_percentage"
+            id="min_percentage"
+            min="0"
+            max="100"
+            step="0.01"
+            value="{{ min_percentage }}"
+        >
+    </div>
+
+    <div>
+        <label for="max_percentage">Maximum %</label>
+        <input
+            type="number"
+            name="max_percentage"
+            id="max_percentage"
+            min="0"
+            max="100"
+            step="0.01"
+            value="{{ max_percentage }}"
+        >
+    </div>
+
+    <button type="submit">Apply</button>
+    <a href="{% url 'showresults' %}" class="button-link secondary-link">
+        Clear
+    </a>
+
+</form>
+{% endif %}
+{% endcomment %}
+
 {% if results %}
 
 <form method="POST" action="{% url 'delete_multiple_results' %}">
@@ -52,6 +112,9 @@
             <th>Correct</th>
             <th>Wrong</th>
             <th>Percentage</th>
+            {% if request.session.role == 'teacher' %}
+            <th>Result</th>
+            {% endif %}
             <th>Attempted At</th>
 
             {% if request.session.role == 'teacher' %}
@@ -89,6 +152,18 @@
             <td>{{ result.wrong_answers }}</td>
 
             <td>{{ result.percentage }}%</td>
+
+            {% if request.session.role == 'teacher' %}
+            <td>
+                {% if result.percentage >= 75 %}
+                    <span class="result-badge excellent-badge">Excellent</span>
+                {% elif result.percentage >= 50 %}
+                    <span class="result-badge pass-badge">Pass</span>
+                {% else %}
+                    <span class="result-badge fail-badge">Fail</span>
+                {% endif %}
+            </td>
+            {% endif %}
 
             <td>
                 {{ result.created_at|date:"d M Y h:i A" }}

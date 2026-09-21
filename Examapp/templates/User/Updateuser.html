@@ -4,7 +4,7 @@
 <div class="form-card">
     <h1>Update User</h1>
     <p>Edit account details and role.</p>
-    <form method="POST">
+    <form method="POST" action="{% url 'update_user' user.id %}">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Update User</button>

@@ -1,6 +1,5 @@
 from functools import wraps
 from datetime import datetime, timedelta
-import secrets
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.http import JsonResponse
@@ -9,7 +8,6 @@ from django.utils import timezone
 
 from .forms import (
     ForgotPasswordForm,
-    OTPForm,
     ResetPasswordForm,
     StudentProfileForm,
     UserForm,
@@ -23,6 +21,28 @@ TEST_CONFIGS = {
     50: 60,
 }
 
+FORM_ERRORS_KEY = 'form_errors'
+
+
+def _store_form_errors(request, form):
+    request.session[FORM_ERRORS_KEY] = {
+        field: [str(error) for error in errors]
+        for field, errors in form.errors.items()
+    }
+
+
+def _apply_stored_form_errors(request, form):
+    errors = request.session.pop(FORM_ERRORS_KEY, None)
+    if not errors:
+        return form
+
+    form.cleaned_data = {}
+    for field, field_errors in errors.items():
+        error_field = field if field in form.fields else None
+        for error in field_errors:
+            form.add_error(error_field, error)
+    return form
+
 
 def _refresh_session_user(request):
     username = request.session.get('username')
@@ -30,7 +50,7 @@ def _refresh_session_user(request):
         return None
 
     user = UserInfo.objects.filter(username=username).first()
-    if not user or not user.is_active:
+    if not user:
         request.session.flush()
         return None
 
@@ -73,15 +93,21 @@ def LoginUser(request, role=None):
         return redirect('login_choice')
 
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+        username = (
+            request.POST.get(f'{role}_login_name')
+            or request.POST.get('username')
+        )
+        password = (
+            request.POST.get(f'{role}_login_secret')
+            or request.POST.get('password')
+        )
         user = UserInfo.objects.filter(username=username, role=role).first()
 
         if user and user.locked_until and user.locked_until > timezone.now():
-            return render(request, 'User/login.html', {
-                'error': 'Account is locked. Try again after 15 minutes.',
-                'role': role,
-            })
+            request.session['login_error'] = (
+                'Account is locked. Try again after 15 minutes.'
+            )
+            return redirect(f'{role}_login')
 
         if user and user.locked_until:
             user.failed_login_attempts = 0
@@ -89,13 +115,6 @@ def LoginUser(request, role=None):
             user.save(update_fields=['failed_login_attempts', 'locked_until'])
 
         if user and check_password(password, user.password):
-            if not user.is_active:
-                request.session['pending_user_id'] = user.id
-                return render(request, 'User/login.html', {
-                    'error': 'Verify your mobile number with OTP before logging in.',
-                    'role': role,
-                    'verification_required': True,
-                })
             user.failed_login_attempts = 0
             user.locked_until = None
             user.save(update_fields=['failed_login_attempts', 'locked_until'])
@@ -110,12 +129,13 @@ def LoginUser(request, role=None):
                 user.locked_until = timezone.now() + timedelta(minutes=15)
             user.save(update_fields=['failed_login_attempts', 'locked_until'])
 
-        return render(request, 'User/login.html', {
-            'error': f'Invalid {role} username or password',
-            'role': role,
-        })
+        request.session['login_error'] = f'Invalid {role} username or password'
+        return redirect(f'{role}_login')
 
-    return render(request, 'User/login.html', {'role': role})
+    return render(request, 'User/login.html', {
+        'role': role,
+        'error': request.session.pop('login_error', None),
+    })
 
 
 def LogoutUser(request):
@@ -221,11 +241,12 @@ def CreateUser(request):
     if request.method == 'POST':
         form = UserForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            _send_otp(request, user, 'activation')
-            return redirect('verify_otp')
-    else:
-        form = UserForm()
+            form.save()
+            return redirect('show_all_user')
+        _store_form_errors(request, form)
+        return redirect('create_user')
+
+    form = _apply_stored_form_errors(request, UserForm())
     return render(request, 'User/createuser.html', {
         'form': form,
         'title': 'Create User',
@@ -244,10 +265,11 @@ def RegisterUser(request, role=None):
             user = form.save(commit=False)
             user.role = role
             user.save()
-            _send_otp(request, user, 'activation')
-            return redirect('verify_otp')
-    else:
-        form = StudentProfileForm()
+            return redirect(f'{role}_login')
+        _store_form_errors(request, form)
+        return redirect(f'{role}_register')
+
+    form = _apply_stored_form_errors(request, StudentProfileForm())
 
     return render(request, 'User/createuser.html', {
         'form': form,
@@ -256,66 +278,6 @@ def RegisterUser(request, role=None):
         'subtitle': f'Register as a {role} to access the portal.',
         'submit_label': 'Register',
     })
-
-
-def _send_otp(request, user, purpose):
-    user.otp_code = f'{secrets.randbelow(1000000):06d}'
-    user.otp_created_at = timezone.now()
-    user.save(update_fields=['otp_code', 'otp_created_at'])
-    request.session['pending_user_id'] = user.id
-    request.session['otp_purpose'] = purpose
-
-
-def VerifyOTP(request):
-    user_id = request.session.get('pending_user_id')
-    purpose = request.session.get('otp_purpose', 'activation')
-    if not user_id:
-        return redirect('login_choice')
-
-    user = get_object_or_404(UserInfo, id=user_id)
-    if request.method == 'POST':
-        form = OTPForm(request.POST)
-        if form.is_valid():
-            otp_expired = (
-                not user.otp_created_at
-                or timezone.now() > user.otp_created_at + timedelta(minutes=10)
-            )
-            if otp_expired:
-                form.add_error('otp', 'OTP expired. Request a new OTP.')
-            elif form.cleaned_data['otp'] != user.otp_code:
-                form.add_error('otp', 'Invalid OTP.')
-            elif purpose == 'reset':
-                request.session['reset_user_id'] = user.id
-                request.session.pop('pending_user_id', None)
-                request.session.pop('otp_purpose', None)
-                return redirect('reset_password')
-            else:
-                user.is_active = True
-                user.otp_code = None
-                user.otp_created_at = None
-                user.save(update_fields=['is_active', 'otp_code', 'otp_created_at'])
-                request.session.pop('pending_user_id', None)
-                request.session.pop('otp_purpose', None)
-                return redirect(f'{user.role}_login')
-    else:
-        form = OTPForm()
-
-    return render(request, 'User/verify_otp.html', {
-        'form': form,
-        'purpose': purpose,
-        'mobile_no': user.mobile_no,
-        'development_otp': user.otp_code,
-    })
-
-
-def ResendOTP(request):
-    user_id = request.session.get('pending_user_id')
-    if not user_id:
-        return redirect('login_choice')
-    user = get_object_or_404(UserInfo, id=user_id)
-    _send_otp(request, user, request.session.get('otp_purpose', 'activation'))
-    return redirect('verify_otp')
-
 
 def ForgotPassword(request, role=None):
     if role not in {'student', 'teacher'}:
@@ -328,14 +290,15 @@ def ForgotPassword(request, role=None):
                 username=form.cleaned_data['username'],
                 mobile_no=form.cleaned_data['mobile_no'],
                 role=role,
-                is_active=True,
             ).first()
             if user:
-                _send_otp(request, user, 'reset')
-                return redirect('verify_otp')
-            form.add_error(None, 'No matching active account was found.')
-    else:
-        form = ForgotPasswordForm()
+                request.session['reset_user_id'] = user.id
+                return redirect('reset_password')
+            form.add_error(None, 'No matching account was found.')
+        _store_form_errors(request, form)
+        return redirect(f'{role}_forgot_password')
+
+    form = _apply_stored_form_errors(request, ForgotPasswordForm())
     return render(request, 'User/forgot_password.html', {'form': form, 'role': role})
 
 
@@ -350,16 +313,18 @@ def ResetPassword(request):
             user.password = make_password(form.cleaned_data['password'])
             user.failed_login_attempts = 0
             user.locked_until = None
-            user.otp_code = None
-            user.otp_created_at = None
             user.save(update_fields=[
                 'password', 'failed_login_attempts', 'locked_until',
-                'otp_code', 'otp_created_at',
             ])
             request.session.pop('reset_user_id', None)
             return redirect(f'{user.role}_login')
-    else:
-        form = ResetPasswordForm(username=user.username)
+        _store_form_errors(request, form)
+        return redirect('reset_password')
+
+    form = _apply_stored_form_errors(
+        request,
+        ResetPasswordForm(username=user.username)
+    )
     return render(request, 'User/reset_password.html', {'form': form})
 
 
@@ -374,7 +339,7 @@ def ShowAllUser(request):
 def ShowUserforUpdate(request, id):
     user = get_object_or_404(UserInfo, id=id)
     return render(request, 'User/Updateuser.html', {
-        'form': UserForm(instance=user),
+        'form': _apply_stored_form_errors(request, UserForm(instance=user)),
         'user': user,
     })
 
@@ -386,6 +351,10 @@ def UpdateUser(request, id):
     if request.method == 'POST' and form.is_valid():
         form.save()
         return redirect('show_all_user')
+    if request.method == 'POST':
+        _store_form_errors(request, form)
+        return redirect('show_update_user', id=id)
+    form = _apply_stored_form_errors(request, form)
     return render(request, 'User/Updateuser.html', {'form': form, 'user': user})
 
 
@@ -418,6 +387,10 @@ def UpdateStudentProfile(request):
         student = form.save()
         request.session['username'] = student.username
         return redirect('student_profile')
+    if request.method == 'POST':
+        _store_form_errors(request, form)
+        return redirect('update_student_profile')
+    form = _apply_stored_form_errors(request, form)
     return render(request, 'User/student_profile_form.html', {'form': form})
 
 
@@ -633,9 +606,41 @@ def RecordWindowWarning(request):
 @session_login_required
 def show_results(request):
     results = Result.objects.select_related('username')
+    sort = request.GET.get('sort', 'percentage_desc')
+    min_percentage = request.GET.get('min_percentage', '').strip()
+    max_percentage = request.GET.get('max_percentage', '').strip()
+
     if request.session.get('role') == 'student':
-        results = results.filter(username_id=request.session['user_id'])
-    return render(request, 'Result/show_results.html', {'results': results})
+        results = results.filter(
+            username_id=request.session['user_id']
+        ).order_by('-created_at')
+    else:
+        if min_percentage:
+            try:
+                results = results.filter(percentage__gte=float(min_percentage))
+            except ValueError:
+                min_percentage = ''
+
+        if max_percentage:
+            try:
+                results = results.filter(percentage__lte=float(max_percentage))
+            except ValueError:
+                max_percentage = ''
+
+        sort_options = {
+            'percentage_desc': '-percentage',
+            'percentage_asc': 'percentage',
+            'latest': '-created_at',
+            'student': 'username__username',
+        }
+        results = results.order_by(sort_options.get(sort, '-percentage'))
+
+    return render(request, 'Result/show_results.html', {
+        'results': results,
+        'sort': sort,
+        'min_percentage': min_percentage,
+        'max_percentage': max_percentage,
+    })
 
 
 def HomePage(request):

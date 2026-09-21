@@ -34,8 +34,6 @@ urlpatterns = [
     path('login/teacher/', views.LoginUser, {'role': 'teacher'}, name='teacher_login'),
     path('forgot-password/student/', views.ForgotPassword, {'role': 'student'}, name='student_forgot_password'),
     path('forgot-password/teacher/', views.ForgotPassword, {'role': 'teacher'}, name='teacher_forgot_password'),
-    path('verify-otp/', views.VerifyOTP, name='verify_otp'),
-    path('resend-otp/', views.ResendOTP, name='resend_otp'),
     path('reset-password/', views.ResetPassword, name='reset_password'),
     path('logout/', views.LogoutUser, name='logout'),
 

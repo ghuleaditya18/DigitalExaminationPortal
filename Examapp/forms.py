@@ -45,17 +45,38 @@ def validate_password(password, username):
 
 class UserForm(forms.ModelForm):
     password = forms.CharField(
-        widget=forms.PasswordInput(),
-        help_text='8-16 characters with uppercase, lowercase, number and special character.',
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
+        # help_text='8-16 characters with uppercase, lowercase, number and special character.',
     )
 
     class Meta:
         model = UserInfo
         fields = ['username', 'password', 'mobile_no', 'role']
-        help_texts = {
-            'username': '5-20 characters. Start with a letter; use letters, numbers, underscores or periods.',
-            'mobile_no': 'Enter a unique 10-digit Indian mobile number starting with 6, 7, 8 or 9.',
+        # help_texts = {
+        #     'username': '5-20 characters. Start with a letter; use letters, numbers, underscores or periods.',
+        #     'mobile_no': 'Enter a unique 10-digit Indian mobile number starting with 6, 7, 8 or 9.',
+        # }
+        widgets = {
+            'username': forms.TextInput(attrs={
+                'autocomplete': 'off',
+                'autocapitalize': 'none',
+                'spellcheck': 'false',
+            }),
+            'mobile_no': forms.TextInput(attrs={
+                'autocomplete': 'off',
+                'inputmode': 'numeric',
+            }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'role' in self.fields:
+            self.fields['role'].widget.attrs['autocomplete'] = 'off'
+        if self.instance and self.instance.pk:
+            self.fields['password'].required = False
+            self.fields['password'].help_text = (
+                'Leave blank to keep the existing password. Enter a new password to change it.'
+            )
 
     def clean_username(self):
         return validate_username(self.cleaned_data['username'])
@@ -82,7 +103,9 @@ class UserForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.password = make_password(self.cleaned_data['password'])
+        password = self.cleaned_data.get('password')
+        if password:
+            user.password = make_password(password)
         if commit:
             user.save()
         return user
@@ -93,29 +116,25 @@ class StudentProfileForm(UserForm):
         fields = ['username', 'password', 'mobile_no']
 
 
-class OTPForm(forms.Form):
-    otp = forms.CharField(
-        label='6-digit OTP',
-        min_length=6,
-        max_length=6,
-        widget=forms.TextInput(attrs={'inputmode': 'numeric', 'autocomplete': 'one-time-code'}),
-    )
-
-    def clean_otp(self):
-        otp = self.cleaned_data['otp']
-        if not otp.isdigit():
-            raise forms.ValidationError('OTP must contain exactly 6 digits.')
-        return otp
-
-
 class ForgotPasswordForm(forms.Form):
-    username = forms.CharField(max_length=100)
-    mobile_no = forms.CharField(max_length=10)
+    username = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={'autocomplete': 'off'}),
+    )
+    mobile_no = forms.CharField(
+        max_length=10,
+        widget=forms.TextInput(attrs={'autocomplete': 'off', 'inputmode': 'numeric'}),
+    )
 
 
 class ResetPasswordForm(forms.Form):
-    password = forms.CharField(label='New password', widget=forms.PasswordInput())
-    confirm_password = forms.CharField(widget=forms.PasswordInput())
+    password = forms.CharField(
+        label='New password',
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
+    )
+    confirm_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
+    )
 
     def __init__(self, *args, username='', **kwargs):
         self.username = username

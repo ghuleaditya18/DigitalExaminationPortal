@@ -12,7 +12,6 @@
     <th>No</th>
     <th>Username</th>
     <th>Role</th>
-    <th>Active</th>
     <th>Mobile No</th>
     <th>Created At</th>
     <th>Updated At</th>
@@ -26,7 +25,6 @@
     <td>{{ forloop.counter }}</td>
     <td>{{ i.username }}</td>
     <td>{{ i.role|title }}</td>
-    <td>{{ i.is_active|yesno:"Yes,No" }}</td>
     <td>{{ i.mobile_no }}</td>
 
     <td>{{ i.created_at|date:"d M Y h:i A" }}</td>

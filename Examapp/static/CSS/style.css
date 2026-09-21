@@ -319,6 +319,16 @@ form select{
     width:100%;
 }
 
+.autofill-decoy{
+    height:0;
+    left:-9999px;
+    opacity:0;
+    pointer-events:none;
+    position:absolute;
+    top:-9999px;
+    width:0;
+}
+
 form textarea{
     min-height:105px;
     resize:vertical;
@@ -818,4 +828,50 @@ select{
 .checkbox-column{
     width:50px;
     text-align:center;
+}
+
+.result-filter-form{
+    align-items:flex-end;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:var(--shadow);
+    display:grid;
+    gap:14px;
+    grid-template-columns:2fr 1fr 1fr auto auto;
+    margin-bottom:20px;
+    padding:18px;
+}
+
+.result-filter-form input,
+.result-filter-form select{
+    margin-bottom:0;
+}
+
+.result-badge{
+    border-radius:999px;
+    display:inline-block;
+    font-size:13px;
+    font-weight:700;
+    padding:5px 10px;
+}
+
+.excellent-badge{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.pass-badge{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.fail-badge{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+@media(max-width:900px){
+    .result-filter-form{
+        grid-template-columns:1fr;
+    }
 }

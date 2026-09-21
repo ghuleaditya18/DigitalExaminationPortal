@@ -9,12 +9,12 @@
     {% endif %}
     <h1>{{ title|default:"Create User" }}</h1>
     <p>{{ subtitle }}</p>
-    <form method="POST">
+    <form method="POST" autocomplete="off">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">{{ submit_label|default:"Save" }}</button>
     </form>
-    <p class="form-note">Your account becomes active after OTP verification.</p>
+    <p class="form-note">Your account is ready after successful registration.</p>
 </div>
 
 {% endblock %}

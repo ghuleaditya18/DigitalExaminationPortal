@@ -1,0 +1,79 @@
+env\Scripts\pip freeze > requirements.txt
+git add requirements.txt
+git commit -m "Add requirements.txt"
+git push
+
+
+employee managem
+
+1) Search in model 
+Searching in Django means fetching data from the database based on specific conditions using the Django ORM (Object Relational Mapper).
+Eg: Student.objects.all()/ SQL: SELECT * FROM student;
+get() Returns Exactly one Object 
+Eg: Student.objects.get(id=1)
+What happens if no record exists?
+Error: Student.DoesNotExist
+What if multiple records match?
+Student.objects.get(age=22)
+Since Aditya and Priya are both 22
+Raises
+Student.MultipleObjectsReturned
+
+filter()
+Returns all matching records.
+Student.objects.filter(city="Pune")
+
+exclude()
+Returns records except those matching the condition.
+Student.objects.exclude(city="Pune")
+
+Why use Q objects?
+To perform complex queries using OR, AND, and NOT.
+Example:
+Student.objects.filter(
+    Q(city="Pune") | Q(age=22)
+)
+
+contains → Case-sensitive.  
+Student.objects.filter(name__contains="Adi") // Matches "Aditya" but not "aditya" on case-sensitive database.
+icontains → Case-insensitive. 
+Student.objects.filter(name__icontains="adi") //Matches "Aditya", "aditya", or "ADItya".
+
+QuerySet: A QuerySet in Django is a collection of database records returned by a query. It allows us to retrieve, filter, sort, and manipulate data from the database using Django's ORM without writing SQL queries.
+Eg:Student.objects.all()          # All records
+Student.objects.filter(age=22) # Matching records
+Student.objects.exclude(city="Pune") # Exclude records
+Student.objects.order_by("name") # Sort
+Student.objects.first()        # First record
+Student.objects.last()         # Last record
+Student.objects.count()        # Total number of records 
+
+Django ORM vs Raw SQL
+We use Django ORM because it allows us to interact with the database using Python instead of SQL. It makes development faster, keeps the code clean and readable, works across different databases without changing queries, and provides protection against SQL injection. Raw SQL is mainly used only for very complex or database-specific queries where ORM is not sufficient.
+without ORM (Raw SQl) : SELECT * FROM Student WHERE city = 'Pune';
+with Django ORM : Student.object.filter(city="Pune")
+
+
+
+
+
+
+
+display and unvisibility hidden
+two elements overlap
+scenario based 
+
+
+how to develop relations in model 
+after submition we found  duplicate records how to prevent them
+how to validate form data
+session based authentication and token based
+pagination 
+Django Rest Framework
+how to prevent slow page loading in Django
+session and cookies
+sharex recording 
+
+
+
+
